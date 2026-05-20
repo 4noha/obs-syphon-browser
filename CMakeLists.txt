@@ -83,6 +83,7 @@ if(APPLE)
     execute_process(COMMAND ln -sf A "${AGL_STUB_FW}/Versions/Current")
     execute_process(COMMAND ln -sf Versions/Current/AGL "${AGL_STUB_FW}/AGL")
     execute_process(COMMAND ln -sf Versions/Current/Headers "${AGL_STUB_FW}/Headers")
+    execute_process(COMMAND ln -sf Versions/Current/Resources "${AGL_STUB_FW}/Resources")
     file(
       WRITE "${AGL_STUB_FW}/Versions/A/Resources/Info.plist"
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -97,6 +98,42 @@ if(APPLE)
   endif()
   target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE "${AGL_STUB_DIR}")
   target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-F${AGL_STUB_DIR}")
+
+  # The stub also has to ride along in the plugin bundle at runtime, otherwise
+  # dyld fails to resolve @rpath/AGL.framework when OBS loads the .plugin.
+  # We embed it under Contents/Frameworks and add @loader_path/../Frameworks
+  # to the rpath so the load command resolves there.
+  #
+  # The template sets CMAKE_SKIP_RPATH=TRUE and configures rpath via the Xcode
+  # attribute LD_RUNPATH_SEARCH_PATHS, so we override that attribute rather
+  # than touching INSTALL_RPATH/BUILD_RPATH (which are ignored here).
+  set_target_properties(
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES
+      XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS
+        "@executable_path/../Frameworks @loader_path/../Frameworks"
+  )
+  add_custom_command(
+    TARGET ${CMAKE_PROJECT_NAME}
+    POST_BUILD
+    COMMAND
+      "${CMAKE_COMMAND}" -E make_directory
+      "$<TARGET_BUNDLE_CONTENT_DIR:${CMAKE_PROJECT_NAME}>/Frameworks"
+    COMMAND
+      "${CMAKE_COMMAND}" -E rm -rf
+      "$<TARGET_BUNDLE_CONTENT_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/AGL.framework"
+    # `ditto` preserves symlinks, which is required for a valid macOS framework
+    # layout. `cmake -E copy_directory` follows symlinks and breaks codesign.
+    COMMAND
+      ditto "${AGL_STUB_FW}"
+      "$<TARGET_BUNDLE_CONTENT_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/AGL.framework"
+    COMMAND
+      codesign --force --sign -
+      "$<TARGET_BUNDLE_CONTENT_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/AGL.framework"
+    COMMAND codesign --force --sign - "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>"
+    COMMENT "Embed AGL stub framework and re-sign plugin bundle"
+    VERBATIM
+  )
 
   target_sources(
     ${CMAKE_PROJECT_NAME}
