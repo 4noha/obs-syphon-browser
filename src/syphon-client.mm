@@ -91,20 +91,13 @@ gs_texture_t *SyphonTextureSource::acquireTexture()
 		return nullptr;
 
 	@autoreleasepool {
-		SyphonImage *image = [d->client newFrameImage];
-		if (!image)
+		id<MTLTexture> mtlTex = [d->client newFrameImage];
+		if (!mtlTex)
 			return d->texture; // keep last frame if no new one
 
-		id<MTLTexture> mtlTex = image.texture;
-		if (!mtlTex) {
-			[image release];
-			return d->texture;
-		}
 		IOSurfaceRef surface = mtlTex.iosurface;
-		if (!surface) {
-			[image release];
+		if (!surface)
 			return d->texture;
-		}
 
 		IOSurfaceID sid = IOSurfaceGetID(surface);
 		if (sid != d->lastSurfaceID || !d->texture) {
@@ -115,7 +108,6 @@ gs_texture_t *SyphonTextureSource::acquireTexture()
 			d->texture = gs_texture_create_from_iosurface(surface);
 			d->lastSurfaceID = sid;
 		}
-		[image release];
 	}
 	return d->texture;
 #else
