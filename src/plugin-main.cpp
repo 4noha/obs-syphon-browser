@@ -22,7 +22,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 extern "C" {
 MODULE_EXPORT const char *obs_module_name(void)
 {
-	return "Syphon Browser";
+	return "4K Splitter";
 }
 
 MODULE_EXPORT const char *obs_module_description(void)
