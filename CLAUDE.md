@@ -1,5 +1,9 @@
 # obs-syphon-browser
 
+> **Workspace**: `~/works/4noha-studio-family/obs-plugins/` (OBS plugins umbrella).
+> See `../CLAUDE.md` for shared CMake / AGL / obs-plugintemplate gotchas, and
+> `~/works/4noha-studio-family/CLAUDE.md` for the broader 東雲はつり studio pipeline.
+
 OBS Studio plugin (macOS). Renders Syphon servers as live previews in a
 dedicated Qt dock — without ever putting them on Program or Preview. The
 user clicks "Add to current scene" on a preview tile to commit a server to
@@ -123,7 +127,7 @@ or embedding problem, not a code problem.
 
 ## Related project
 
-`~/works/4ksplitter_` (separate repo, Unity) is the Syphon **sender**.
+`~/works/4noha-studio-family/4ksplitter_` (separate repo, Unity) is the Syphon **sender**.
 This plugin is the receiving side: the 4ksplitter app emits 4 views as
 Syphon servers, OBS sees them in the dock, the user picks which view goes
 on air via "Add to current scene".
